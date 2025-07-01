@@ -1,4 +1,4 @@
-# Document Processing MVP
+# Document Processing AI
 
 A full-stack document processing application built with Remix, Node.js, and FastAPI.
 
