@@ -143,18 +143,26 @@ export default function AnalysisResults({
                               }
                               
                               return (
-                                <div key={field} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <span className="text-sm font-medium text-gray-700 min-w-0">
-                                      {field}:
-                                    </span>
-                                    <span className="text-sm text-gray-900 flex-1">
-                                      {displayValue}
+                                <div key={field} className="py-1 px-2 hover:bg-gray-50 rounded">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <span className="text-sm font-medium text-gray-700 min-w-0">
+                                        {field}:
+                                      </span>
+                                      <span className="text-sm text-gray-900 flex-1">
+                                        {displayValue}
+                                      </span>
+                                    </div>
+                                    <span className={`text-xs font-medium ${isLowConfidence ? 'text-yellow-600' : 'text-blue-600'}`}>
+                                      {confidence}%
                                     </span>
                                   </div>
-                                  <span className={`text-xs font-medium ${isLowConfidence ? 'text-yellow-600' : 'text-blue-600'}`}>
-                                    {confidence}%
-                                  </span>
+                                  {isLowConfidence && fieldResult.explanation && (
+                                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700">
+                                      <div className="font-medium text-yellow-800 mb-1">Explanation</div>
+                                      {fieldResult.explanation}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}

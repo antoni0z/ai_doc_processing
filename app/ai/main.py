@@ -8,6 +8,7 @@ import base64
 import json
 import pymupdf
 import logfire
+
 logfire.configure()
 logfire.instrument_openai()
 
@@ -37,7 +38,8 @@ def build_output_schema(fields: list[OutputField]) -> Type[BaseModel]:
         field_model = create_model(
             f"FieldResult_{f.name}",
             confidence_degree=(int, Field(..., description="Confidence degree between 1 and 10", ge=1, le=10)),
-            result=(f.dtype, Field(..., description=f.description))
+            result=(f.dtype, Field(..., description=f.description)),
+            explanation=(str, Field(..., description="Explanation of the field result and confidence level, follow the rules provided to you"))
         )
         annotations[f.name] = (field_model, Field(..., description=f"Result and confidence score for {f.name}"))
     
@@ -48,7 +50,7 @@ def build_output_schema(fields: list[OutputField]) -> Type[BaseModel]:
 def pdf_as_images(content, inst_img_list):
     doc = pymupdf.open(stream = content)
     for page in doc:
-        pix = page.get_pixmap(dpi = 100)
+        pix = page.get_pixmap(dpi = 200)
         b64 = base64.b64encode(pix.tobytes("png")).decode()
         data_uri = f"data:image/png;base64,{b64}"
         inst_img_list.append(instructor.Image.from_base64(data_uri))
@@ -111,21 +113,42 @@ async def analyze_images(
     client = instructor.from_provider(request.provider, async_client = True)
 
     OutputModel = build_output_schema(request.output_fields)
+    output_fields = [f"Name: {r.name}\nDescription:{r.description}" for r in request.output_fields]
     response = await client.chat.completions.create(
         messages = [
             {
                 "role": "system",
-                "content": "Analyze the documents and provide the fields you are asked for, they will be provided to you in image format."},
+                "content": """
+                ## Task context
+                You are a document-analysis assistant supporting an operations team.
+                Your task is to extract the specific fields requested from the supplied documents.
+                
+                ## Considerations
+                Consider the type of document you are working with (bank statements, ids, invoices, ...), if it is a standard document, where its from... And based on that and your knowledge identify the fields that the user asked for.
+                The fields may appear implicitly or explicitly, and sometimes you may have to infer them where the value that you asked for is depending on your knowledge of the document, or that the type of field that is being asked usually dont appear in docs like the doc it was provided.
+                You must provide a confidence level to each field, and you will explain how you extracted the field and where did you find it in the document.
+                In the case that confidence level is below 7 you will provide actionable insights an explanation regarding why you didn't find it.
+                This insights are meant to help the ops team and they will provide actions and insights for them so they can either take actions or take a look in more depth.
+                In the case of confidence level >= 7, the explanation should be brief.
+                Only state what you are certain about, do not invent values. Be neutral and direct in your langauge.
+
+                ## Output
+
+                A structured output the fields that have been extracted.
+
+                For each field you should provide:
+                confidence_degree: 1-10
+                result: The extracted value in the type that is specified to you
+                explanation: if conf >= 7, brief explanation on where it was. If <7, actionable insights for ops team."""
+            },
             {
                 "role": "user",
-                "content": ["##Documents description\n\n{{description}}\n\nThis group of documents has been tagged as: {{tag}}\n\n## Expected output fields\n\n{{output_fields}}", *inst_imgs]
-            }
-            ],
-        context = {
-            "description": request.description,
-            "output_fields": [f"Name: {r.name}\nDescription:{r.description}" for r in request.output_fields],
-            "tag": request.tag
-        },
-        response_model = OutputModel
+                "content": [
+                    f"## Document description\n\n{request.description}\n\n**Tag:** {request.tag}\n\n## Fields to extract\n\n{output_fields}\n\n---  \nHere are the images/pdfs corresponding to the document/s:",
+                    *inst_imgs
+                ]
+            }],
+        response_model = OutputModel,
+        reasoning_effort = "high"
     )
     return response

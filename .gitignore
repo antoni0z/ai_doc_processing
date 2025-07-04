@@ -30,3 +30,4 @@ yarn-error.log*
 # Optional: if using pnpm
 .pnpm-debug.log*
 Automatic document review.md
+NOTES.md
