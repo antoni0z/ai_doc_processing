@@ -14,7 +14,6 @@ export default function TagConfiguration({
   const [currentTagIndex, setCurrentTagIndex] = useState(0);
 
 
-  // Tag navigation functions
   const navigateToNextTag = () => {
     if (projectTags.length > 0) {
       setCurrentTagIndex((prev) => (prev + 1) % projectTags.length);
@@ -27,15 +26,14 @@ export default function TagConfiguration({
     }
   };
 
-  // Reset tag index when tags change
   useEffect(() => {
     setCurrentTagIndex(0);
   }, [JSON.stringify(projectTags)]);
 
-  // Get current tag
+
   const currentTag = projectTags[currentTagIndex] || null;
 
-  // Helper functions for configuration management
+
   const addOutputField = (tag) => {
     setAnalysisConfig(prev => {
       const newConfig = {
@@ -49,7 +47,6 @@ export default function TagConfiguration({
         }
       };
       
-      // Save to cache
       if (saveTagConfigToCache) {
         saveTagConfigToCache(tag, newConfig[tag]);
       }
@@ -70,7 +67,6 @@ export default function TagConfiguration({
         }
       };
       
-      // Save to cache
       if (saveTagConfigToCache) {
         saveTagConfigToCache(tag, newConfig[tag]);
       }
@@ -89,7 +85,6 @@ export default function TagConfiguration({
         }
       };
       
-      // Save to cache
       if (saveTagConfigToCache) {
         saveTagConfigToCache(tag, newConfig[tag]);
       }
@@ -98,7 +93,6 @@ export default function TagConfiguration({
     });
   };
 
-  // Check if analysis can be started
   const canAnalyze = projectTags.length > 0 && 
     Object.entries(analysisConfig)
       .filter(([tag]) => projectTags.includes(tag))

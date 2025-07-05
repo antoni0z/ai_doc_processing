@@ -65,13 +65,11 @@ export function useAnalysisConfig(activeProject, projectTags) {
   }, [activeProject.id]);
 
   const analyzeDocuments = async () => {
-    // Set analyzing state for current project only
     setIsAnalyzing(prev => ({
       ...prev,
       [activeProject.id]: true
     }));
     
-    // Clear current project results
     setAnalysisResults(prev => ({
       ...prev,
       [activeProject.id]: null
@@ -91,7 +89,6 @@ export function useAnalysisConfig(activeProject, projectTags) {
       
       if (response.ok) {
         const results = await response.json();
-        // Store results per project
         setAnalysisResults(prev => ({
           ...prev,
           [activeProject.id]: results

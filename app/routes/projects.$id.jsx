@@ -74,7 +74,6 @@ export const action = async ({ params, request }) => {
     return { rejected, added: accepted.length };
   }
 
-  // 🎯 GESTIÓN DE PROYECTOS
   if (intent === "create_project") {
     const { createProject } = await import("../project.server");
     const newId = createProject("Nuevo Proyecto");
@@ -119,7 +118,7 @@ export const action = async ({ params, request }) => {
     return { error: "Error eliminando proyecto" };
   }
 
-  // 🏷️ ACTUALIZAR TAG DE DOCUMENTO
+
   if (intent === "updateDocumentTag") {
     const docId = Number(form.get("docId"));
     const tagValue = form.get("tagValue");
@@ -133,7 +132,6 @@ export const action = async ({ params, request }) => {
     return { error: "Error actualizando tag del documento" };
   }
 
-  // 🗑️ ELIMINAR DOCUMENTO
   if (intent === "deleteDocument") {
     const docId = Number(form.get("docId"));
 
