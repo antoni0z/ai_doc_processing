@@ -1,6 +1,9 @@
 import { db } from "./db.server";
+import { validateProjectId, validateDocumentId, validateFileName, validateFileSize } from "./utils/validation.js";
+import { MAX_FILE_SIZE, MIME_TYPE_EXTENSIONS } from "./utils/constants.js";
 
 export function getDocumentsByProject(projectId) {
+  const validatedProjectId = validateProjectId(projectId);
   let documents = db
     .prepare(
       `SELECT id, name, tags, format, size, status, created_at
@@ -8,7 +11,7 @@ export function getDocumentsByProject(projectId) {
     WHERE project_id = ?
     ORDER BY created_at DESC`
     )
-    .all(projectId);
+    .all(validatedProjectId);
   return documents;
 }
 
@@ -56,6 +59,18 @@ export function deleteDocument(docId) {
 
 export async function createDocument(projectId, file) {
   try {
+    // Validate inputs
+    const validatedProjectId = validateProjectId(projectId);
+    const validatedFileName = validateFileName(file.name);
+    validateFileSize(file.size, MAX_FILE_SIZE);
+    
+    // Validate file extension matches MIME type
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    const allowedExtensions = MIME_TYPE_EXTENSIONS[file.type];
+    if (!allowedExtensions || !allowedExtensions.includes(fileExtension)) {
+      throw new Error('File extension does not match MIME type');
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
@@ -64,11 +79,11 @@ export async function createDocument(projectId, file) {
        VALUES (?, ?, ?, ?, ?, ?)`
     );
     const result = stmt.run(
-      file.name,
+      validatedFileName,
       file.type,
       file.size,
       "unprocessed",
-      projectId,
+      validatedProjectId,
       fileBuffer
     );
 

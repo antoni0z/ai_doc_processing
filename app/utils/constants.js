@@ -6,6 +6,19 @@ export const VALID_FILE_TYPES = [
   "image/jpg",
 ];
 
+// Security configurations
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FILES_PER_UPLOAD = 10;
+export const ALLOWED_FILE_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png'];
+
+// MIME type validation mapping
+export const MIME_TYPE_EXTENSIONS = {
+  "application/pdf": [".pdf"],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "image/jpg": [".jpg"]
+};
+
 export const DEFAULT_ANALYSIS_FIELDS = [
   { name: 'full_name', description: 'Name of surname of the main person appearing in the document', dtype: 'str' },
   { name: 'is_scanned', description: 'Is the document scanned or is it a digital document?', dtype: 'bool' },

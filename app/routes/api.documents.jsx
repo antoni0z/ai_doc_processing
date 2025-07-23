@@ -1,4 +1,6 @@
 // API route for document analysis
+import { validateProjectId, validateJSON, validateAnalysisConfig, sanitizeString } from "../utils/validation.js";
+
 export const action = async ({ request }) => {
   const AI_SERVER_API = process.env.AI_SERVER_API ?? "http://localhost:8000";
   if (request.method !== "POST") {
@@ -7,13 +9,22 @@ export const action = async ({ request }) => {
 
   try {
     const formData = await request.formData();
-    const projectId = formData.get("projectId");
-    const analysisConfig = JSON.parse(formData.get("analysisConfig"));
-    const projectDescription = formData.get("projectDescription");
-    const projectTags = JSON.parse(formData.get("projectTags") || "[]");
+    
+    // Validate and sanitize inputs
+    const projectId = validateProjectId(formData.get("projectId"));
+    const analysisConfigRaw = formData.get("analysisConfig");
+    const analysisConfig = validateAnalysisConfig(validateJSON(analysisConfigRaw));
+    const projectDescription = sanitizeString(formData.get("projectDescription"), 1000);
+    const projectTagsRaw = formData.get("projectTags") || "[]";
+    const projectTags = validateJSON(projectTagsRaw);
+    
+    // Validate projectTags is an array
+    if (!Array.isArray(projectTags)) {
+      throw new Error("Project tags must be an array");
+    }
     
     const { getDocumentsWithFilesForAnalysis } = await import("../document.server");
-    const docs = getDocumentsWithFilesForAnalysis(Number(projectId));
+    const docs = getDocumentsWithFilesForAnalysis(projectId);
     
     const docsByTag = {};
     docs.forEach(doc => {

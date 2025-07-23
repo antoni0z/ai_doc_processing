@@ -6,15 +6,16 @@ import DocumentManagement from "../components/DocumentManagement";
 import TagConfiguration from "../components/TagConfiguration";
 import AnalysisResults from "../components/AnalysisResults";
 import { useAnalysisConfig } from "../hooks/useAnalysisConfig";
-import { VALID_FILE_TYPES } from "../utils/constants";
+import { VALID_FILE_TYPES, MAX_FILES_PER_UPLOAD } from "../utils/constants";
 import { getOverallPrecisionStats } from "../utils/precisionCalculations";
+import { validateProjectId, validateDocumentId, sanitizeString } from "../utils/validation";
 
 export const loader = async ({ params }) => {
   try {
     const { getProject } = await import("../project.server");
     const { getDocumentsByProject } = await import("../document.server");
 
-    const projectId = Number(params.id);
+    const projectId = validateProjectId(params.id);
 
     const project = getProject(projectId);
     if (!project) {
@@ -39,9 +40,10 @@ export const loader = async ({ params }) => {
 };
 
 export const action = async ({ params, request }) => {
-  const form = await request.formData();
-  const intent = form.get("intent");
-  const projectId = Number(params.id);
+  try {
+    const form = await request.formData();
+    const intent = form.get("intent");
+    const projectId = validateProjectId(params.id);
 
   if (intent === "upload") {
     const files = form.getAll("docs");
